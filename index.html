@@ -51,6 +51,14 @@
             z-index: 100;
             display: none;
         }
+
+        /* Optional: Make the switch button more visible on top of the video */
+        #switch-camera-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
@@ -63,28 +71,34 @@
     </div>
 
     <!-- 3D Model Viewer -->
-    <!-- Make sure 'model.glb' is uploaded in the same repository directory as this file -->
-    <model-viewer id="model-viewer" src="model.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
+    <!-- Using a known working model from modelviewer.dev for testing -->
+    <model-viewer
+        id="model-viewer"
+        src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+        alt="3D Model"
+        auto-rotate
+        camera-controls>
+    </model-viewer>
 
     <script>
         const video = document.getElementById('camera-background');
         const modelViewer = document.getElementById('model-viewer');
         const fallbackMessage = document.getElementById('fallback-message');
 
-        // Function to start the camera with specified facingMode
+        let currentFacingMode = 'user'; // Track current camera mode
+
+        // Function to start the camera with the specified facing mode
         function startCamera(facingMode = 'user') {
             navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: facingMode // 'user' for front, 'environment' for rear
-                }
+                video: { facingMode }
             })
             .then(stream => {
                 video.srcObject = stream;
                 fallbackMessage.style.display = 'none';
+                currentFacingMode = facingMode;
             })
             .catch(err => {
                 console.error('Error accessing the camera:', err);
-                // Show fallback message if no camera is available
                 fallbackMessage.style.display = 'block';
             });
         }
@@ -92,40 +106,47 @@
         // Start with the front camera by default
         startCamera();
 
-        // Add a button to switch cameras
+        // Create a button to switch cameras
         const switchButton = document.createElement('button');
+        switchButton.id = 'switch-camera-button';
         switchButton.textContent = 'Switch Camera';
-        switchButton.style.position = 'absolute';
-        switchButton.style.top = '10px';
-        switchButton.style.left = '10px';
-        switchButton.style.zIndex = '10';
-        switchButton.onclick = () => {
-            // Toggle between 'user' (front) and 'environment' (rear) cameras
-            const currentFacingMode = video.srcObject?.getVideoTracks()[0]?.getSettings().facingMode || 'user';
+        switchButton.onclick = () => switchCamera();
+        document.body.appendChild(switchButton);
+
+        function switchCamera() {
             const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
             startCamera(newFacingMode);
-        };
-        document.body.appendChild(switchButton);
+        }
+
+        // Double tap detection variables
+        let lastTapTime = 0;
+        function onDoubleTap() {
+            const currentTime = new Date().getTime();
+            if (currentTime - lastTapTime < 300) {
+                // Detected a second tap within 300ms, switch camera
+                switchCamera();
+            }
+            lastTapTime = currentTime;
+        }
+
+        // Add event listener for double-tap (touchend for mobile)
+        document.addEventListener('touchend', onDoubleTap);
 
         // Link device movement to model rotation with increased sensitivity
         window.addEventListener('deviceorientation', (event) => {
             const { alpha, beta, gamma } = event;
-            // alpha: 0 to 360
-            // beta: -180 to 180, we multiply by 2 for more sensitivity
-            // gamma: -90 to 90, also multiply by 2
+            // Adjust sensitivity: multiply beta and gamma by 2
             const adjustedAlpha = alpha || 0;
             const adjustedBeta = (beta || 0) * 2;   // Increase sensitivity
             const adjustedGamma = (gamma || 0) * 2; // Increase sensitivity
 
-            // Set the model's rotation
-            // Rotation order in model-viewer is yaw (Z), pitch (X), and roll (Y).
-            // We'll map alpha -> Z, beta -> X, gamma -> Y for a more intuitive experience:
+            // Set the model's rotation:
+            // We'll map:
+            //   beta (x tilt) to X rotation
+            //   gamma (y tilt) to Y rotation
+            //   alpha (z rotation) to Z rotation
             modelViewer.setAttribute('rotation', `${adjustedBeta}deg ${adjustedGamma}deg ${adjustedAlpha}deg`);
         });
-
-        // On desktop, device orientation may not fire. The model should still be visible.
-        // Make sure model.glb is present and accessible. If the model doesn't appear,
-        // check the browser console for loading errors (404, etc.).
     </script>
 </body>
 </html>
