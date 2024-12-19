@@ -7,6 +7,9 @@
         body {
             margin: 0;
             overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: sans-serif;
         }
 
         #camera-background {
@@ -38,18 +41,35 @@
         button:hover {
             background-color: rgba(0, 0, 0, 0.9);
         }
+
+        #fallback-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 100;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <!-- Live Camera Background -->
     <video id="camera-background" autoplay playsinline muted></video>
 
+    <!-- Fallback message if camera not available -->
+    <div id="fallback-message">
+        <p>Camera not available. You can still view the model, but no AR background.</p>
+    </div>
+
     <!-- 3D Model Viewer -->
+    <!-- Make sure 'model.glb' is uploaded in the same repository directory as this file -->
     <model-viewer id="model-viewer" src="model.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
 
     <script>
         const video = document.getElementById('camera-background');
         const modelViewer = document.getElementById('model-viewer');
+        const fallbackMessage = document.getElementById('fallback-message');
 
         // Function to start the camera with specified facingMode
         function startCamera(facingMode = 'user') {
@@ -60,10 +80,12 @@
             })
             .then(stream => {
                 video.srcObject = stream;
+                fallbackMessage.style.display = 'none';
             })
             .catch(err => {
                 console.error('Error accessing the camera:', err);
-                alert('Camera access failed: ' + err.message);
+                // Show fallback message if no camera is available
+                fallbackMessage.style.display = 'block';
             });
         }
 
@@ -85,19 +107,25 @@
         };
         document.body.appendChild(switchButton);
 
-        // Link device movement to model rotation
+        // Link device movement to model rotation with increased sensitivity
         window.addEventListener('deviceorientation', (event) => {
-            // Get device orientation angles
             const { alpha, beta, gamma } = event;
+            // alpha: 0 to 360
+            // beta: -180 to 180, we multiply by 2 for more sensitivity
+            // gamma: -90 to 90, also multiply by 2
+            const adjustedAlpha = alpha || 0;
+            const adjustedBeta = (beta || 0) * 2;   // Increase sensitivity
+            const adjustedGamma = (gamma || 0) * 2; // Increase sensitivity
 
-            // Adjust the rotation of the 3D model
-            if (modelViewer) {
-                // Convert orientation values into rotations
-                const xRotation = gamma ? gamma / 90 : 0; // Tilt left/right
-                const yRotation = beta ? beta / 90 : 0;   // Tilt forward/backward
-                modelViewer.setAttribute('rotation', `${xRotation}rad ${yRotation}rad 0rad`);
-            }
+            // Set the model's rotation
+            // Rotation order in model-viewer is yaw (Z), pitch (X), and roll (Y).
+            // We'll map alpha -> Z, beta -> X, gamma -> Y for a more intuitive experience:
+            modelViewer.setAttribute('rotation', `${adjustedBeta}deg ${adjustedGamma}deg ${adjustedAlpha}deg`);
         });
+
+        // On desktop, device orientation may not fire. The model should still be visible.
+        // Make sure model.glb is present and accessible. If the model doesn't appear,
+        // check the browser console for loading errors (404, etc.).
     </script>
 </body>
 </html>
