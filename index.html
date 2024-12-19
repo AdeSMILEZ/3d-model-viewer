@@ -28,9 +28,25 @@
             width: 100%;
             height: 100%;
         }
+
+        #camera-switch {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <!-- Button to switch cameras -->
+    <button id="camera-switch">Switch Camera</button>
+
     <!-- Live Camera Background -->
     <video id="camera-background" autoplay playsinline muted></video>
 
@@ -39,7 +55,59 @@
     </model-viewer>
 
     <script>
-        // Access the device's camera and set it as the video background
         const video = document.getElementById('camera-background');
+        const switchButton = document.getElementById('camera-switch');
+        let currentCameraIndex = 0;
+        let availableCameras = [];
 
-        navigator.mediaDevices.getUserMedia({ video:
+        // Function to start the video stream with a specific device ID
+        async function startCamera(deviceId) {
+            try {
+                const constraints = {
+                    video: { deviceId: deviceId ? { exact: deviceId } : undefined },
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing the camera:', err);
+                alert('Unable to access the camera. Please check your permissions.');
+            }
+        }
+
+        // Get available cameras and initialize the rear camera if possible
+        async function initializeCameras() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                availableCameras = devices.filter(device => device.kind === 'videoinput');
+
+                if (availableCameras.length > 0) {
+                    // Try to find a rear-facing camera
+                    const rearCamera = availableCameras.find(camera => camera.label.toLowerCase().includes('back'));
+                    const initialCameraId = rearCamera ? rearCamera.deviceId : availableCameras[0].deviceId;
+
+                    // Start with the selected camera
+                    startCamera(initialCameraId);
+                } else {
+                    alert('No cameras found on this device.');
+                }
+            } catch (err) {
+                console.error('Error initializing cameras:', err);
+            }
+        }
+
+        // Switch to the next camera in the list
+        switchButton.addEventListener('click', () => {
+            if (availableCameras.length > 1) {
+                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+                const nextCameraId = availableCameras[currentCameraIndex].deviceId;
+                startCamera(nextCameraId);
+            } else {
+                alert('No other cameras available.');
+            }
+        });
+
+        // Initialize cameras on page load
+        initializeCameras();
+    </script>
+</body>
+</html>
