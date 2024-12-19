@@ -3,52 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Viewer with Live Camera Background</title>
+    <title>Model Viewer Test</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-
-        /* Fullscreen live camera background */
-        #camera-background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -1;
-        }
-
-        /* Model viewer styles */
-        model-viewer {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
 </head>
 <body>
-    <!-- Live Camera Background -->
-    <video id="camera-background" autoplay playsinline muted></video>
-
-    <!-- 3D Model Viewer -->
-   <model-viewer src="animation2.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
-
-    <script>
-        // Access the device's camera and set it as the video background
-        const video = document.getElementById('camera-background');
-
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error('Error accessing the camera:', err);
-                alert('Unable to access the camera. Please check your permissions.');
-            });
-    </script>
+    <model-viewer src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+                  alt="3D Model" 
+                  auto-rotate 
+                  camera-controls 
+                  style="width: 100%; height: 100vh;">
+    </model-viewer>
 </body>
 </html>
