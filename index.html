@@ -69,14 +69,15 @@
         <p>Camera not available. You can still view the model, but no AR background.</p>
     </div>
 
-    <!-- Use your own model here -->
+    <!-- 3D Model Viewer -->
+    <!-- Make sure ANIMATION2.glb is in the same directory and the name matches exactly -->
     <model-viewer
-    id="model-viewer"
-    src="ANIMATION2.glb"
-    alt="3D Model"
-    auto-rotate
-    camera-controls>
-</model-viewer>
+        id="model-viewer"
+        src="ANIMATION2.glb"
+        alt="3D Model"
+        auto-rotate
+        camera-controls>
+    </model-viewer>
 
     <script>
         const video = document.getElementById('camera-background');
@@ -118,18 +119,18 @@
         function onDoubleTap() {
             const currentTime = Date.now();
             if (currentTime - lastTapTime < 300) {
-                // Detected double tap
+                // Detected a double tap, switch camera
                 switchCamera();
             }
             lastTapTime = currentTime;
         }
         document.addEventListener('touchend', onDoubleTap);
 
-        // Device orientation to rotate the model
+        // Device orientation to rotate the model (with increased sensitivity)
         window.addEventListener('deviceorientation', (event) => {
             const { alpha, beta, gamma } = event;
 
-            // Increase sensitivity
+            // Increase sensitivity by multiplying beta and gamma by 2
             const adjustedAlpha = alpha || 0;
             const adjustedBeta = (beta || 0) * 2;
             const adjustedGamma = (gamma || 0) * 2;
