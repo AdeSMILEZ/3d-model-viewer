@@ -45,10 +45,11 @@
     <video id="camera-background" autoplay playsinline muted></video>
 
     <!-- 3D Model Viewer -->
-    <model-viewer src="model.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
+    <model-viewer id="model-viewer" src="model.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
 
     <script>
         const video = document.getElementById('camera-background');
+        const modelViewer = document.getElementById('model-viewer');
 
         // Function to start the camera with specified facingMode
         function startCamera(facingMode = 'user') {
@@ -83,6 +84,20 @@
             startCamera(newFacingMode);
         };
         document.body.appendChild(switchButton);
+
+        // Link device movement to model rotation
+        window.addEventListener('deviceorientation', (event) => {
+            // Get device orientation angles
+            const { alpha, beta, gamma } = event;
+
+            // Adjust the rotation of the 3D model
+            if (modelViewer) {
+                // Convert orientation values into rotations
+                const xRotation = gamma ? gamma / 90 : 0; // Tilt left/right
+                const yRotation = beta ? beta / 90 : 0;   // Tilt forward/backward
+                modelViewer.setAttribute('rotation', `${xRotation}rad ${yRotation}rad 0rad`);
+            }
+        });
     </script>
 </body>
 </html>
