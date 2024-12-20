@@ -25,15 +25,34 @@
 </head>
 <body>
     <video id="camera-background" autoplay playsinline muted></video>
+    <!-- Use your model file here, ensuring the filename and case match exactly -->
     <model-viewer src="ANIMATION2.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
     <script>
         const video = document.getElementById('camera-background');
+        const modelViewer = document.querySelector('model-viewer');
 
+        // Start camera with default front-facing camera
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
         .then(stream => {
             video.srcObject = stream;
         })
         .catch(err => console.error('Camera error:', err));
+
+        // Device orientation listener
+        window.addEventListener('deviceorientation', (event) => {
+            const { alpha, beta, gamma } = event;
+
+            // Increase sensitivity:
+            // alpha: 0 to 360 degrees (leave as is for full rotation)
+            // beta: -180 to 180 (multiply by 2 to increase sensitivity)
+            // gamma: -90 to 90 (multiply by 2 to increase sensitivity)
+            const adjustedAlpha = alpha || 0;
+            const adjustedBeta = (beta || 0) * 2;
+            const adjustedGamma = (gamma || 0) * 2;
+
+            // Apply rotation to the model
+            modelViewer.setAttribute('rotation', `${adjustedBeta}deg ${adjustedGamma}deg ${adjustedAlpha}deg`);
+        });
     </script>
 </body>
 </html>
