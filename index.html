@@ -7,11 +7,7 @@
         body {
             margin: 0;
             overflow: hidden;
-            background: #000;
-            color: #fff;
-            font-family: sans-serif;
         }
-
         #camera-background {
             position: absolute;
             top: 0;
@@ -21,122 +17,23 @@
             object-fit: cover;
             z-index: -1;
         }
-
         model-viewer {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        button {
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: rgba(0, 0, 0, 0.9);
-        }
-
-        #fallback-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 100;
-            display: none;
-        }
-
-        #switch-camera-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 <body>
-    <!-- Live Camera Background -->
     <video id="camera-background" autoplay playsinline muted></video>
-
-    <!-- Fallback message if camera not available -->
-    <div id="fallback-message">
-        <p>Camera not available. You can still view the model, but no AR background.</p>
-    </div>
-
-    <!-- 3D Model Viewer -->
-    <!-- Make sure ANIMATION2.glb is in the same directory and the name matches exactly -->
-    <model-viewer
-        id="model-viewer"
-        src="ANIMATION2.glb"
-        alt="3D Model"
-        auto-rotate
-        camera-controls>
-    </model-viewer>
-
+    <model-viewer src="ANIMATION2.glb" alt="3D Model" auto-rotate camera-controls></model-viewer>
     <script>
         const video = document.getElementById('camera-background');
-        const modelViewer = document.getElementById('model-viewer');
-        const fallbackMessage = document.getElementById('fallback-message');
 
-        let currentFacingMode = 'user'; // Track current camera mode
-
-        // Start the camera
-        function startCamera(facingMode = 'user') {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode } })
-            .then(stream => {
-                video.srcObject = stream;
-                fallbackMessage.style.display = 'none';
-                currentFacingMode = facingMode;
-            })
-            .catch(err => {
-                console.error('Error accessing the camera:', err);
-                fallbackMessage.style.display = 'block';
-            });
-        }
-
-        startCamera();
-
-        // Create a button to switch cameras
-        const switchButton = document.createElement('button');
-        switchButton.id = 'switch-camera-button';
-        switchButton.textContent = 'Switch Camera';
-        switchButton.onclick = () => switchCamera();
-        document.body.appendChild(switchButton);
-
-        function switchCamera() {
-            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            startCamera(newFacingMode);
-        }
-
-        // Double tap detection
-        let lastTapTime = 0;
-        function onDoubleTap() {
-            const currentTime = Date.now();
-            if (currentTime - lastTapTime < 300) {
-                // Detected a double tap, switch camera
-                switchCamera();
-            }
-            lastTapTime = currentTime;
-        }
-        document.addEventListener('touchend', onDoubleTap);
-
-        // Device orientation to rotate the model (with increased sensitivity)
-        window.addEventListener('deviceorientation', (event) => {
-            const { alpha, beta, gamma } = event;
-
-            // Increase sensitivity by multiplying beta and gamma by 2
-            const adjustedAlpha = alpha || 0;
-            const adjustedBeta = (beta || 0) * 2;
-            const adjustedGamma = (gamma || 0) * 2;
-
-            modelViewer.setAttribute('rotation', `${adjustedBeta}deg ${adjustedGamma}deg ${adjustedAlpha}deg`);
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => console.error('Camera error:', err));
     </script>
 </body>
 </html>
